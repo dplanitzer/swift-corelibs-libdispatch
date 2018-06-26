@@ -79,11 +79,21 @@ public extension DispatchSourceProtocol {
 	}
 
 	public var mask: UInt {
-		return CDispatch.dispatch_source_get_mask((self as! DispatchSource).__wrapped)
+		let r = CDispatch.dispatch_source_get_mask((self as! DispatchSource).__wrapped)
+		#if os(Windows)
+		return UInt(r)
+		#else
+		return r
+		#endif
 	}
 
 	public var data: UInt {
-		return CDispatch.dispatch_source_get_data((self as! DispatchSource).__wrapped)
+		let r = CDispatch.dispatch_source_get_data((self as! DispatchSource).__wrapped)
+		#if os(Windows)
+		return UInt(r)
+		#else
+		return r
+		#endif
 	}
 
 	public var isCancelled: Bool {
@@ -113,7 +123,7 @@ public extension DispatchSource {
 	}
 #endif
 
-#if !os(Linux) && !os(Android)
+#if !os(Linux) && !os(Android) && !os(Windows)
 	public struct ProcessEvent : OptionSet, RawRepresentable {
 		public let rawValue: UInt
 		public init(rawValue: UInt) { self.rawValue = rawValue }
@@ -171,7 +181,7 @@ public extension DispatchSource {
 	}
 #endif
 
-#if !os(Linux) && !os(Android)
+#if !os(Linux) && !os(Android) && !os(Windows)
 	public class func makeProcessSource(identifier: pid_t, eventMask: ProcessEvent, queue: DispatchQueue? = nil) -> DispatchSourceProcess {
 		let source = dispatch_source_create(_swift_dispatch_source_type_PROC(), UInt(identifier), eventMask.rawValue, queue?.__wrapped)
 		return DispatchSource(source: source) as DispatchSourceProcess
@@ -189,7 +199,12 @@ public extension DispatchSource {
 	}
 
 	public class func makeTimerSource(flags: TimerFlags = [], queue: DispatchQueue? = nil) -> DispatchSourceTimer {
-		let source = dispatch_source_create(_swift_dispatch_source_type_TIMER(), 0, UInt(flags.rawValue), queue?.__wrapped)
+		#if os(Windows)
+		let rawFlags = UInt32(flags.rawValue)
+		#else
+		let rawFlags = UInt(flags.rawValue)
+		#endif
+		let source = dispatch_source_create(_swift_dispatch_source_type_TIMER(), 0, rawFlags, queue?.__wrapped)
 		return DispatchSource(source: source) as DispatchSourceTimer
 	}
 
@@ -208,7 +223,7 @@ public extension DispatchSource {
 		return DispatchSource(source: source) as DispatchSourceUserDataReplace
 	}
 
-#if !os(Linux) && !os(Android)
+#if !os(Linux) && !os(Android) && !os(Windows)
 	public class func makeFileSystemObjectSource(fileDescriptor: Int32, eventMask: FileSystemEvent, queue: DispatchQueue? = nil) -> DispatchSourceFileSystemObject {
 		let source = dispatch_source_create(_swift_dispatch_source_type_VNODE(), UInt(fileDescriptor), eventMask.rawValue, queue?.__wrapped)
 		return DispatchSource(source: source) as DispatchSourceFileSystemObject
@@ -261,7 +276,7 @@ public extension DispatchSourceMemoryPressure {
 }
 #endif
 
-#if !os(Linux) && !os(Android)
+#if !os(Linux) && !os(Android) && !os(Windows)
 public extension DispatchSourceProcess {
 	public var handle: pid_t {
 		return pid_t(dispatch_source_get_handle(self as! DispatchSource))
@@ -617,7 +632,7 @@ public extension DispatchSourceTimer {
 	}
 }
 
-#if !os(Linux) && !os(Android)
+#if !os(Linux) && !os(Android) && !osWindows)
 public extension DispatchSourceFileSystemObject {
 	public var handle: Int32 {
 		return Int32(dispatch_source_get_handle((self as! DispatchSource).__wrapped))
@@ -642,7 +657,12 @@ public extension DispatchSourceUserDataAdd {
 	/// - parameter data: the value to add to the current pending data. A value of zero
 	///		has no effect and will not result in the submission of the event handler block.
 	public func add(data: UInt) {
-		dispatch_source_merge_data((self as! DispatchSource).__wrapped, UInt(data))
+		#if os(Windows)
+		let rawData = UInt32(data)
+		#else
+		let rawData = UInt(data)
+		#endif
+		dispatch_source_merge_data((self as! DispatchSource).__wrapped, rawData)
 	}
 }
 
@@ -653,7 +673,12 @@ public extension DispatchSourceUserDataOr {
 	/// - parameter data: The value to OR into the current pending data. A value of zero
 	///		has no effect and will not result in the submission of the event handler block.
 	public func or(data: UInt) {
-		dispatch_source_merge_data((self as! DispatchSource).__wrapped, UInt(data))
+		#if os(Windows)
+		let rawData = UInt32(data)
+		#else
+		let rawData = UInt(data)
+		#endif
+		dispatch_source_merge_data((self as! DispatchSource).__wrapped, rawData)
 	}
 }
 
@@ -665,6 +690,11 @@ public extension DispatchSourceUserDataReplace {
 	///		A value of zero will be stored but will not result in the submission of the event
 	///		handler block.
 	public func replace(data: UInt) {
-		dispatch_source_merge_data((self as! DispatchSource).__wrapped, UInt(data))
+		#if os(Windows)
+		let rawData = UInt32(data)
+		#else
+		let rawData = UInt(data)
+		#endif
+		dispatch_source_merge_data((self as! DispatchSource).__wrapped, rawData)
 	}
 }

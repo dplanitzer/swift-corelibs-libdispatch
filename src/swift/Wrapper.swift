@@ -76,7 +76,12 @@ public class DispatchSemaphore : DispatchObject {
 	}
 
 	public init(value: Int) {
-		__wrapped = dispatch_semaphore_create(Int(value))
+		#if os(Windows)
+		let rawValue = Int32(value)
+		#else
+		let rawValue = Int(value)
+		#endif
+		__wrapped = dispatch_semaphore_create(rawValue)
 	}
 
 	deinit {
@@ -181,7 +186,7 @@ extension DispatchSource : DispatchSourceMachSend,
 }
 #endif
 
-#if !os(Linux) && !os(Android)
+#if !os(Linux) && !os(Android) && !os(Windows)
 extension DispatchSource : DispatchSourceProcess,
 	DispatchSourceFileSystemObject {
 }
@@ -272,7 +277,7 @@ public protocol DispatchSourceMemoryPressure : DispatchSourceProtocol {
 }
 #endif
 
-#if !os(Linux) && !os(Android)
+#if !os(Linux) && !os(Android) && !os(Windows)
 public protocol DispatchSourceProcess : DispatchSourceProtocol {
 	var handle: pid_t { get }
 
@@ -302,7 +307,7 @@ public protocol DispatchSourceTimer : DispatchSourceProtocol {
 	func scheduleRepeating(wallDeadline: DispatchWallTime, interval: Double, leeway: DispatchTimeInterval)
 }
 
-#if !os(Linux) && !os(Android)
+#if !os(Linux) && !os(Android) && !os(Windows)
 public protocol DispatchSourceFileSystemObject : DispatchSourceProtocol {
 	var handle: Int32 { get }
 

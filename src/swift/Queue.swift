@@ -115,12 +115,22 @@ public extension DispatchQueue {
 	@available(macOS, deprecated: 10.10, message: "")
 	@available(*, deprecated: 8.0, message: "")
 	public class func global(priority: GlobalQueuePriority) -> DispatchQueue {
-		return DispatchQueue(queue: CDispatch.dispatch_get_global_queue(Int(priority._translatedValue), 0))
+		#if os(Windows)
+		let rawPriority = Int32(priority._translatedValue)
+		#else
+		let rawPriority = Int(priority._translatedValue)
+		#endif
+		return DispatchQueue(queue: CDispatch.dispatch_get_global_queue(rawPriority, 0))
 	}
 
 	@available(macOS 10.10, iOS 8.0, *)
 	public class func global(qos: DispatchQoS.QoSClass = .default) -> DispatchQueue {
-		return DispatchQueue(queue: CDispatch.dispatch_get_global_queue(Int(qos.rawValue.rawValue), 0))
+		#if os(Windows)
+		let rawQos = Int32(qos.rawValue.rawValue)
+		#else
+		let rawQos = Int(qos.rawValue.rawValue)
+		#endif
+		return DispatchQueue(queue: CDispatch.dispatch_get_global_queue(rawQos, 0))
 	}
 
 	public class func getSpecific<T>(key: DispatchSpecificKey<T>) -> T? {
